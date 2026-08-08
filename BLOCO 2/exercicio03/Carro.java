@@ -1,6 +1,6 @@
 package Bloco2;
 
-public class Car extends Veiculo {
+public class Carro extends Veiculo {
     private int numeroDePortas;
 
     @Override
