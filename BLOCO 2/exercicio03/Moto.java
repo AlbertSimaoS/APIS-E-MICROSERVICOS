@@ -1,6 +1,6 @@
 package Bloco2;
 
-public class Motorcycle extends Veiculo {
+public class Moto extends Veiculo {
     private int cilindradas;
 
     @Override
