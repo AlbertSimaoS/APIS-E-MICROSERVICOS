@@ -1,5 +1,3 @@
-package br.com.exercicios.bloco6;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
