@@ -2,7 +2,7 @@ package Bloco1;
 
 import java.util.Scanner;
 
-public class CalcAvg {
+public class calcAvg {
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 
