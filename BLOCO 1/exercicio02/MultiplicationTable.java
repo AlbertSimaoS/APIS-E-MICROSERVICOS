@@ -2,7 +2,7 @@ package Bloco1;
 
 import java.util.Scanner;
 
-public class MultiplicationTable {
+public class multiplicationTable {
     public static void main(String[] args) {
         System.out.println("======================================");
         System.out.println("\t\t Tabuada");
