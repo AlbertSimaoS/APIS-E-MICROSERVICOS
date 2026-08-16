@@ -1,5 +1,8 @@
-Escritório de Investimentos VcRiquinho — Protótipo
-1. Estrutura de Classes UML
+# Escritório de Investimentos VcRiquinho - Protótipo
+
+## 1. Diagrama de Classes UML
+
+```mermaid
 classDiagram
     class Conta {
         <<interface>>
@@ -18,24 +21,20 @@ classDiagram
         +getSaldo(): double
         #validarPeriodoSimulacao(dias: int): void
     }
-
     Conta <|.. ContaBancaria
 
     class ContaCorrente {
         +realizarSimulacao(dias: int, taxaCDIMensal: double, cliente: Cliente)
     }
-
     class ContaCDI {
         +realizarSimulacao(dias: int, taxaCDIMensal: double, cliente: Cliente)
     }
-
     class ContaInvestimento {
         -produtos: List~ProdutoInvestimento~
         +adicionarProduto(p: ProdutoInvestimento)
         +removerProduto(p: ProdutoInvestimento)
         +realizarSimulacao(dias: int, taxaCDIMensal: double, cliente: Cliente)
     }
-
     ContaBancaria <|-- ContaCorrente
     ContaBancaria <|-- ContaCDI
     ContaBancaria <|-- ContaInvestimento
@@ -47,20 +46,17 @@ classDiagram
         +calcularRendimento(valor: double, dias: int): double
         +isElegivelTaxa(dias: int): boolean
     }
-
     class RendaFixa {
         -rendimentoMensalFixo: double
         -carenciaDias: int
         +calcularRendimento(valor: double, dias: int): double
         +isElegivelTaxa(dias: int): boolean
     }
-
     class RendaVariavel {
         -rendimentoMensalEsperado: double
         +calcularRendimento(valor: double, dias: int): double
         +isElegivelTaxa(dias: int): boolean
     }
-
     ProdutoInvestimento <|-- RendaFixa
     ProdutoInvestimento <|-- RendaVariavel
 
@@ -73,64 +69,36 @@ classDiagram
         +adicionarConta(c: Conta)
         +getTaxaInvestimentoAutomatico(): double
     }
-
     class PessoaFisica {
         -cpf: String
         +getTaxaInvestimentoAutomatico(): double
     }
-
     class PessoaJuridica {
         -cnpj: String
         +getTaxaInvestimentoAutomatico(): double
     }
-
     Cliente <|-- PessoaFisica
     Cliente <|-- PessoaJuridica
 
     Cliente "1" --> "1..*" Conta : possui
-    ContaInvestimento "*" --> "*" ProdutoInvestimento : possui
+    ContaInvestimento "*" --> "*" ProdutoInvestimento : aloca
+```
 
-2. Principais decisões de implementação
+## 2. Escolhas de Design e Justificativas
 
-O projeto foi desenvolvido utilizando os fundamentos da Programação Orientada a Objetos, buscando separar responsabilidades e facilitar a manutenção do sistema.
+A solução foi estruturada aplicando fortemente os conceitos de Programação Orientada a Objetos (POO):
 
-Encapsulamento e regras do sistema
-Conta obrigatória para cada cliente: o cliente precisa receber uma conta no momento de sua criação. O construtor de Cliente e de suas subclasses verifica se a conta informada é válida. Caso seja null, é lançada uma IllegalArgumentException.
-Controle dos períodos de simulação: a classe ContaBancaria possui uma validação centralizada para os períodos permitidos. Dessa maneira, as subclasses podem reutilizar essa regra antes de executar suas respectivas simulações.
-Proteção dos atributos: os dados internos das classes utilizam private ou protected, evitando que sejam modificados diretamente de fora das classes.
-Herança, abstração e interfaces
+### Encapsulamento e Restrições de Domínio
+- **Garantia de Conta Inicial Obrigatória**: Atendendo à regra de negócio descrita no enunciado, o construtor da classe genérica `Cliente` e de suas subclasses (`PessoaFisica` e `PessoaJuridica`) obrigatoriamente exige uma `Conta` válida. Caso seja fornecido `null`, o sistema interrompe o fluxo lançando um `IllegalArgumentException`. Isso blinda a aplicação no nível de domínio para que não existam clientes sem contas alocados na memória.
+- **Validação de Períodos Permitidos**: A classe `ContaBancaria` agora expõe o método `validarPeriodoSimulacao(int dias)` que é ativamente acionado pelas contas filhas antes de realizar qualquer cálculo nas simulações. Ele garante de maneira limpa e unificada que apenas os períodos estritos de 30, 60, 90 ou 180 dias sejam computados.
+- Os atributos das classes permanecem com modificadores `private` ou `protected`, forçando manipulação através de comportamentos (métodos) e não acesso direto ao estado.
 
-A interface Conta estabelece os comportamentos que todas as contas devem possuir, como depositar, sacar, consultar o saldo e realizar simulações.
+### Classes Abstratas, Interfaces e Herança
+- A **Interface `Conta`** dita o contrato bancário global, e a **Classe Abstrata `ContaBancaria`** efetiva as lógicas concretas (como manipular saldo e barrar períodos não autorizados), enxugando totalmente as classes filhas de lógicas repetitivas (DRY).
 
-A classe abstrata ContaBancaria funciona como uma base para os diferentes tipos de conta. Ela concentra comportamentos que são comuns entre elas, evitando a repetição de código.
+### Polimorfismo
+- O motor de simulação contido em `ContaInvestimento.realizarSimulacao` processa uma lista heterogênea baseada na abstração `ProdutoInvestimento`. Ele consulta polimorficamente o método `isElegivelTaxa()` que em Renda Fixa avalia o período de carência (bloqueando ou liberando a taxa de serviço), enquanto em Renda Variável aprova integralmente. Essa manobra enxuga blocos complexos de `if/else` e instâncias (type checking).
+- O mesmo vale na simulação bancária: a lista iterada em `Cliente` aponta para referências genéricas de `Conta`, disparando a mecânica correta para Conta Corrente, CDI ou Investimento dependendo unicamente da natureza do objeto sob a variável.
 
-A partir dela são especializadas as classes:
-
-ContaCorrente;
-ContaCDI;
-ContaInvestimento.
-
-Da mesma forma, ProdutoInvestimento serve como classe base para os diferentes tipos de investimentos, sendo especializada em RendaFixa e RendaVariavel.
-
-Uso de polimorfismo
-
-O polimorfismo permite que o programa trabalhe com diferentes objetos por meio de suas classes ou interfaces mais genéricas.
-
-Na ContaInvestimento, por exemplo, existe uma coleção de objetos do tipo ProdutoInvestimento. Cada investimento pode executar sua própria versão de calcularRendimento() e isElegivelTaxa(), de acordo com seu tipo.
-
-Assim, uma RendaFixa pode verificar sua condição de carência, enquanto uma RendaVariavel pode utilizar uma regra diferente, sem que a classe responsável pela simulação precise identificar manualmente o tipo de cada objeto.
-
-O mesmo conceito é utilizado com as contas dos clientes. A coleção utiliza referências do tipo Conta, mas cada objeto executa o comportamento específico de sua implementação, seja uma conta corrente, CDI ou investimento.
-
-Protótipo em memória e operações CRUD
-
-Para demonstrar o funcionamento do sistema sem depender de um banco de dados, o protótipo utiliza coleções em memória para armazenar os objetos.
-
-A classe Main demonstra as principais operações de um CRUD:
-
-Create: criação e inclusão de clientes, contas e produtos;
-Read: consulta e exibição das informações armazenadas;
-Update: alteração dos dados e estados dos objetos;
-Delete: remoção de elementos das coleções.
-
-Também é considerada a relação entre os investimentos e as contas dos clientes. Dessa forma, quando um produto de investimento é removido do sistema, sua associação com as contas que o utilizavam também deve ser atualizada.
+### Protótipo em Memória e CRUD
+Para atestar os requisitos solicitados de forma funcional, o arquivo principal de terminal `Main` executa de maneira estrita o **CRUD** (Create, Read, Update, Delete) em listas nativas que simulam o banco de dados. Lá é demonstrada a inclusão, formatação (Read), a alteração do estado de objetos (Update via Setters) e por fim a remoção (Delete). Na remoção de produtos, ilustra-se consistentemente que retirar um ativo da instituição também desvincula esse ativo das contas de clientes investidores.
